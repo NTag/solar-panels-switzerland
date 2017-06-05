@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "express": "^4.15.2",
+    "jsclipper": "https://github.com/platener/jsclipper",
+    "topojson": "^3.0.0"
+  }
+}

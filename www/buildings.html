@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+  background-color: #333;
+  margin: 0;
+  padding: 0;
+}
+.subunit-boundary {
+  fill: none;
+  stroke: #777;
+  stroke-width: 0.2px;
+  stroke-linejoin: round;
+}
+.building {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 0.2px;
+  stroke-linejoin: round;
+}
+.building-with {
+  fill: none;
+  stroke: #FFA000;
+  stroke-width: 0.2px;
+  stroke-linejoin: round;
+}
+.highways {
+  fill: none;
+  stroke: black;
+  stroke-width: 0.2px;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+.swiss {
+  fill: #333;
+}
+.buttons {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+}
+.infosb {
+  position: fixed;
+  top: 40px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-family: 'Avenir Next';
+}
+.hidden {
+  display: none;
+}
+#imgb {
+  max-width: 300px;
+}
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<script type="text/javascript" src="jss/jss.min.js"></script>
+<div class="buttons">
+  <button id="togglewith">Display with</button>
+  <button id="togglewithout">Display without</button>
+  <button id="toggleroads">Display roads</button>
+  <button id="fillbuildings">Fill buildings</button>
+</div>
+<div class="infosb">
+  <img id="imgb" />
+</div>
+<script>
+let width = window.innerWidth, height = window.innerHeight;
+
+
+var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on("zoom", zoomed);
+
+let svg = d3.select("body").append("svg")
+  .attr("width", width)
+  .attr("height", height)
+  .append("g")
+  .call(zoom)
+  .append("g");
+
+
+function zoomed() {
+    svg.attr("transform",
+        "translate(" + zoom.translate() + ")" +
+        "scale(" + zoom.scale() + ")"
+    );
+}
+
+let projection = d3.geo.mercator().center([6.5289447,46.5263728]).scale(500000);
+let path = d3.geo.path().projection(projection);
+let labels;
+
+d3.json('highway.json', (err, highways) => {
+  svg.append("path")
+    .datum(highways)
+    .attr("d", path)
+    .attr("class", "highways");
+});
+
+d3.json('labels.json', function (error, l) {
+  labels = l;
+});
+
+d3.json("infos.json", function (error, infos) {
+  if (error) return console.error(error);
+  console.log(infos);
+  let features = {type: "FeatureCollection", features: []};
+  Object.keys(infos).forEach(coords => {
+    let info = infos[coords];
+    if (info.polygonBuilding && info.polygonBuilding.length >= 1) {
+      // console.log(info.polygonBuilding[0]);
+      features.features.push({
+        type: "Feature",
+        geometry: {
+          coordinates: info.polygonBuilding,
+          type: "Polygon"
+        },
+        id: coords
+      });
+    }
+  });
+  // svg.append("path")
+  //   .datum(features)
+  //   .attr("d", path)
+  //   .attr("pointer-events", "visible")
+  //   .on('click', function (e, e1, e2) { console.log('click', e, e1, e2, this) })
+  //   // .attr('transform', transf)
+  //   .attr("class", "subunit-boundary");
+  console.log(features);
+  let buildingDisplayed = null;
+  let clickb = e => {
+    let id = e.id;
+    if (buildingDisplayed === id) {
+      document.getElementById('imgb').className = 'hidden';
+      buildingDisplayed = null;
+    } else {
+      document.getElementById('imgb').src = 'images/' + id + '.png';
+      document.getElementById('imgb').className = '';
+      buildingDisplayed = id;
+    }
+  };
+  features.features.forEach(f => {
+    let classn = 'building';
+    if (labels[f.id]) {
+      classn = 'building-with';
+    }
+    svg.append("path")
+      .datum(f)
+      .attr("d", path)
+      .attr("pointer-events", "visible")
+      .on('click', clickb)
+      // .attr('transform', transf)
+      .attr("class", classn);
+  });
+
+});
+
+d3.json("vd-municipalities.json", function(error, vd) {
+  if (error) return console.error(error);
+  console.log(vd);
+
+  let municipalities = topojson.feature(vd, vd.objects.municipalities);
+  console.log(municipalities);
+  svg.append("path")
+    .datum(municipalities)
+    .attr('class', 'swiss')
+    // .attr('transform', transf)
+    .attr("d", path);
+  // svg.append("path")
+  //   .datum(topojson.feature(vd, vd.objects.municipalities))
+  //   .attr("d", d3.geo.path().projection(null));
+
+  svg.append("path")
+    .datum(topojson.mesh(vd, vd.objects.municipalities, function(a, b) { return a !== b; }))
+    .attr("d", path)
+    // .attr('transform', transf)
+    .attr("class", "subunit-boundary");
+});
+
+let displayWith = true;
+d3.select('#togglewith').on('click', _ => {
+  let opacity = '1';
+  if (displayWith) {
+    opacity = '0';
+  }
+  displayWith = !displayWith;
+  jss.set('.building-with', {
+    'opacity': opacity
+  });
+});
+let displayWithout = true;
+d3.select('#togglewithout').on('click', _ => {
+  let opacity = '1';
+  if (displayWithout) {
+    opacity = '0';
+  }
+  displayWithout = !displayWithout;
+  jss.set('.building', {
+    'opacity': opacity
+  });
+});
+let displayRoads = false;
+d3.select('#toggleroads').on('click', _ => {
+  let opacity = '1';
+  if (displayRoads) {
+    opacity = '0';
+  }
+  displayRoads = !displayRoads;
+  jss.set('.highways', {
+    'opacity': opacity
+  });
+});
+let fillBuildings = false;
+d3.select('#fillbuildings').on('click', _ => {
+  if (fillBuildings) {
+    jss.set('.building', {
+      'fill': 'none'
+    });
+    jss.set('.building-with', {
+      'fill': 'none'
+    });
+  } else {
+    jss.set('.building', {
+      'fill': '#eee'
+    });
+    jss.set('.building-with', {
+      'fill': '#FFA000'
+    });
+  }
+  fillBuildings = !fillBuildings;
+});
+</script>
+</body>
+</html>
