@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>PIS - Labelisation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <img id="image" />
+    <div id="prog"></div>
+    <p>
+      <kbd>o</kbd>: with solar panel<br />
+      <kbd>p</kbd>: without solar panel<br />
+      <kbd>i</kbd>: go back
+    </p>
+    <script type="text/javascript">
+      var images;
+      var i = 0;
+      $.getJSON('/images', function (im) {
+        images = im;
+
+        nextImage();
+      });
+      var img = $('#image');
+      var pro = $('#prog');
+
+      function nextImage() {
+        pro.text(i);
+        img.attr('src', images[i]);
+      }
+
+      $('body').keypress(function(e) {
+        var w = e.which;
+        var v;
+        if (w === 111) { // letter 'o'
+          v = true;
+        } else if (w === 112) { // letter 'p'
+          v = false;
+        } else if (w === 105) { // letter 'i'
+          i--;
+          nextImage();
+        }
+        if (v !== undefined) {
+          $.get('/image/' + images[i] + '/' + (+v));
+          i++;
+          nextImage();
+        }
+      });
+    </script>
+  </body>
+</html>
