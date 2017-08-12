@@ -16,7 +16,7 @@ cd www/
 git clone https://github.com/Box9/jss.git
 unzip data.zip
 cd ../
-node server.js
+node --max_old_space_size=4096 server.js
 ```
 
 Then, open `localhost:3001/swiss.html` in your browser.

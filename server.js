@@ -8,7 +8,9 @@ let cantons = {};
 let solarStats = {cantons: {}, cantonsmn: {}};
 fs.readdir(municipalitiesFolder, (err, files) => {
   files.forEach(file => {
-    cantons[file.replace('.json', '')] = JSON.parse(fs.readFileSync('./' + path.join(municipalitiesFolder, file)));
+    if (file.match(/json$/)) {
+      cantons[file.replace('.json', '')] = JSON.parse(fs.readFileSync('./' + path.join(municipalitiesFolder, file)));
+    }
   });
 
   Object.keys(cantons).forEach(cn => {
