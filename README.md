@@ -1,5 +1,10 @@
 # Mapping the solar panels of Switzerland
 
+Project in the context of **EPFL | Media & Design Lab | Personal Interaction Studio 2017**.  
+Course Tutors:
+* Immanuel Koh 
+* Jeffrey Huang
+
 ## Requirements
 
 * NodeJS v7;
